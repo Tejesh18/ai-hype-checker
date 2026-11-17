@@ -14,7 +14,7 @@ from .claims import ai_mentions, extract_claims
 from .edgar import Edgar
 from .parse import parse_10k
 
-app = typer.Typer(help="Does a company's AI talk have receipts?", no_args_is_help=True)
+app = typer.Typer(help="Score the AI claims in SEC 10-K filings.", no_args_is_help=True)
 console = Console()
 
 # Large companies across tech, finance, energy, health and retail. Not just
