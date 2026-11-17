@@ -100,7 +100,7 @@
   </table>
 
   <h2>Read the sentences</h2>
-  <p class="lede">All of them, with the section and page they came from. Labels on <b>hand-labeled</b> sentences come from the labeling guide; the rest come from the classifier.</p>
+  <p class="lede">All of them, with the section and page they came from. Sentences in the labeled set show their guide label; the rest come from the classifier.</p>
   <div class="controls">
     <select id="f-co"><option value="">All companies</option></select>
     <select id="f-label">
@@ -173,7 +173,7 @@ fetch("data.json").then(r => r.json()).then(data => {
     [pct(n("risk") / total), "are risk warnings"],
   ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
 
-  // findings are written by hand from the results, see FINDINGS below
+  // findings are written from the results, see FINDINGS below
   document.getElementById("findings").innerHTML = FINDINGS.map(f => `<li>${f}</li>`).join("");
 
   // leaderboard
@@ -212,7 +212,7 @@ fetch("data.json").then(r => r.json()).then(data => {
       <div class="meta"><span class="chip" style="background:${COLORS[c.label]}">${c.label}</span>
         <span>${NAMES[c.ticker] || c.ticker} · FY${c.fiscal_year} · ${esc(c.section)} · p.${c.page}</span>
         <a href="${c.url}" target="_blank" rel="noopener">filing ↗</a>
-        ${c.label_source === "human" ? "<span>hand-labeled</span>" : ""}</div>
+        ${c.label_source === "human" ? "<span>labeled set</span>" : ""}</div>
       <p>${esc(c.sentence)}</p></li>`).join("");
     document.getElementById("more").style.display = list.length > shown ? "" : "none";
   };
@@ -224,7 +224,7 @@ fetch("data.json").then(r => r.json()).then(data => {
   // metrics
   const m = data.metrics;
   document.getElementById("method-lede").textContent =
-    `${m.n} sentences were labeled by hand. Each method is scored with ${m.folds}-fold stratified cross-validation on the same splits (F1 per class, and macro F1 across all four).`;
+    `${m.n} sentences were labeled against the guide. Each method is scored with ${m.folds}-fold stratified cross-validation on the same splits (F1 per class, and macro F1 across all four).`;
   document.querySelector("#metrics tbody").innerHTML = Object.entries(m.results).map(([k, r]) =>
     `<tr><td>${METHOD_NAMES[k] || k}</td><td class="num"><b>${r.macro_f1.toFixed(2)}</b></td>${
       ["concrete", "vague", "risk", "context"].map(l => `<td class="num">${r.per_class_f1[l].toFixed(2)}</td>`).join("")}</tr>`).join("");

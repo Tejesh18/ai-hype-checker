@@ -23,7 +23,7 @@ Regulators have noticed too. The SEC brought its first "AI-washing" cases in 202
 ## How it works
 
 ```
-SEC EDGAR ──> parse 10-K HTML ──> find AI sentences ──> label 252 by hand ──> train classifiers
+SEC EDGAR ──> parse 10-K HTML ──> find AI sentences ──> label 252 sentences ──> train classifiers
  (15 cos,      (sections, pages,     (1,177 sentences,      (4 labels, written      (5-fold CV,
   2 years)      tables, XBRL)         with section+page)     guideline)              4 methods)
                                                                                         │
@@ -35,7 +35,7 @@ SEC EDGAR ──> parse 10-K HTML ──> find AI sentences ──> label 252 by
 1. **Fetch.** Pulls the latest two 10-Ks per company from SEC EDGAR and caches them.
 2. **Parse.** Splits each filing into blocks that know their page and 10-K section (Item 1 Business, Item 1A Risk Factors, Item 7 MD&A, ...).
 3. **Extract.** Keeps every sentence that mentions AI. "AI" and "LLM" are matched case-sensitively so words like "said" never count.
-4. **Label.** 252 sentences, sampled evenly across all 30 filings, labeled by hand with [a written guide](labels/GUIDELINES.md).
+4. **Label.** 252 sentences, sampled evenly across all 30 filings, labeled against [a written guide](labels/GUIDELINES.md).
 5. **Classify.** Four approaches compared on the same cross-validation folds (below). The best one labels the remaining sentences.
 6. **Score.** Substance = concrete / (concrete + vague). Risk warnings and background are left out on purpose, so a careful bank isn't punished for being careful.
 
@@ -50,7 +50,7 @@ SEC EDGAR ──> parse 10-K HTML ──> find AI sentences ──> label 252 by
 
 ## Results
 
-252 hand-labeled sentences, 5-fold stratified cross-validation, same folds for every method.
+252 labeled sentences, 5-fold stratified cross-validation, same folds for every method.
 
 | Method | Macro F1 | Concrete | Vague | Risk | Context |
 |---|---|---|---|---|---|
@@ -74,9 +74,9 @@ SEC EDGAR ──> parse 10-K HTML ──> find AI sentences ──> label 252 by
 ## Limitations
 
 - 15 companies and two years each. The leaderboard is a snapshot, not an index.
-- One person (me) labeled the data, so there's no inter-annotator agreement number yet. The guideline is public so anyone can disagree with a specific call.
+- The labels are a single pass with no second annotator, so there's no inter-annotator agreement number yet. The guideline is public so anyone can disagree with a specific call.
 - Sentences are judged alone. A vague sentence followed by a concrete one in the next paragraph still counts as vague.
-- Labels on the full set come from a model with about 0.7 F1 on the classes that matter, so treat company-level numbers as directional. Where a sentence was hand-labeled, the hand label is used (297 sentences, since some identical sentences appear in both years).
+- Labels on the full set come from a model with about 0.7 F1 on the classes that matter, so treat company-level numbers as directional. Where a sentence is in the labeled set, its label is used (297 sentences, since some identical sentences appear in both years).
 - Page numbers come from page breaks in the HTML, so they can be off by one from the PDF.
 
 ## Run it yourself
