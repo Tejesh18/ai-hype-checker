@@ -12,7 +12,7 @@ pip install --quiet --target build/lambda \
 mkdir -p build/lambda/aiwash
 cp src/aiwash/__init__.py src/aiwash/aws.py src/aiwash/claims.py src/aiwash/edgar.py \
    src/aiwash/lite.py src/aiwash/parse.py build/lambda/aiwash/
-cp docs/model.json build/lambda/aiwash/model.json
+cp web/public/model.json build/lambda/aiwash/model.json
 cp labels/labels.csv build/lambda/aiwash/labels.csv
 
 (cd build/lambda && zip -qr ../lambda.zip .)

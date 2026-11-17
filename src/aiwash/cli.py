@@ -192,8 +192,8 @@ def score(
 
 
 @app.command()
-def site(out: Path = typer.Option(Path("docs/data.json"))) -> None:
-    """Export results for the static site in docs/."""
+def site(out: Path = typer.Option(Path("web/public/data.json"))) -> None:
+    """Export the data snapshot, model and test fixture for the web app in web/."""
     import csv
     import json
 
@@ -230,6 +230,15 @@ def site(out: Path = typer.Option(Path("docs/data.json"))) -> None:
     mpath = out.parent / "model.json"
     mpath.write_text(json.dumps(model, separators=(",", ":")))
     console.print(f"[green]wrote {mpath} ({mpath.stat().st_size // 1024} KB, {len(vocab)} features)[/green]")
+
+    # What sklearn predicts for every labeled sentence, so the TypeScript
+    # port can be tested against it (web/src/lib/classifier.test.ts).
+    examples = load_labels()
+    fixture = Path("web/src/lib/__fixtures__/parity.json")
+    fixture.parent.mkdir(parents=True, exist_ok=True)
+    texts = [e.text for e in examples]
+    fixture.write_text(json.dumps({"texts": texts, "sklearn": [str(x) for x in pipe.predict(texts)]}))
+    console.print(f"[green]wrote {fixture}[/green]")
 
 
 @app.command()

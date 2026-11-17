@@ -6,7 +6,7 @@ Every company says "AI" now. This reads every sentence about AI in their annual 
 
 **Live: [tejesh18.github.io/ai-hype-checker](https://tejesh18.github.io/ai-hype-checker/)**: each company's annual report marked up like you'd mark it with a highlighter (green if you could check it, yellow if it's just a claim, red if it's a risk warning), with every sentence linked to its page in the filing. There's also a box to paste your own text and see how it reads.
 
-[![Each company's AI sentences as highlighter marks](docs/screenshot.png)](https://tejesh18.github.io/ai-hype-checker/)
+[![Each company's AI sentences as highlighter marks](assets/screenshot.png)](https://tejesh18.github.io/ai-hype-checker/)
 
 ## Why
 
@@ -42,6 +42,7 @@ EventBridge (hourly) ─> Lambda poller ─> S3 raw/            (new 10-Ks from 
 - **Private bucket.** Only CloudFront can read, and only `public/`.
 - **Scorer runs as a container image** from ECR because the embedding model doesn't fit a zip Lambda. Cold start ~0.6–1.0 s, peak memory ~1.1 GB.
 - **Concurrent scorers don't clobber each other.** Every scorer rewrites `data.json`, so writes use S3 conditional requests (`If-Match`). On the first backfill, 20 of 30 runs collided, retried, and nothing was lost.
+- **The site** is a React + TypeScript app in `web/` (Vite, Vitest), built and deployed to GitHub Pages by a workflow on every push.
 - **Fits the AWS free tier.**
 
 Setup, updating, and what to do when an alarm fires: [DEPLOY.md](DEPLOY.md).

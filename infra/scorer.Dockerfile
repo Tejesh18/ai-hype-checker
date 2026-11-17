@@ -11,7 +11,7 @@ RUN python -c "from fastembed import TextEmbedding; TextEmbedding('BAAI/bge-smal
 
 COPY src/aiwash/__init__.py src/aiwash/aws.py src/aiwash/claims.py src/aiwash/edgar.py \
      src/aiwash/lite.py src/aiwash/parse.py ${LAMBDA_TASK_ROOT}/aiwash/
-COPY docs/model.json labels/labels.csv build/embed_head.json ${LAMBDA_TASK_ROOT}/aiwash/
+COPY web/public/model.json labels/labels.csv build/embed_head.json ${LAMBDA_TASK_ROOT}/aiwash/
 COPY infra/scorer_entry.py ${LAMBDA_TASK_ROOT}/
 
 CMD ["scorer_entry.handler"]

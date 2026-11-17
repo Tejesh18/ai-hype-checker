@@ -55,15 +55,15 @@ uv run aiwash rescore --bucket "$(terraform -chdir=infra output -raw bucket)"
 
 | Change | Do this |
 |---|---|
-| Code in `src/aiwash/` or a new `docs/model.json` | `./infra/build.sh && terraform -chdir=infra apply`, then `aiwash rescore` so old filings use the new model |
+| Code in `src/aiwash/` or a new `web/public/model.json` | `./infra/build.sh && terraform -chdir=infra apply`, then `aiwash rescore` so old filings use the new model |
 | Add or remove a company | Edit `tickers` in `infra/variables.tf` and apply. The next hourly run fetches it. |
-| New labels | `aiwash evaluate`, `aiwash site` (regenerates `docs/model.json`), then the code step above |
+| New labels | `aiwash evaluate`, `aiwash site` (regenerates `web/public/model.json`), then the code step above |
 
 ## When something breaks
 
 - **Email "aiwash-filing-failed".** A filing failed scoring three times and is in the dead-letter queue. The daily redrive replays it at 06:30 UTC. If it keeps failing, it's usually a filing format the parser hasn't seen: `aws logs tail /aws/lambda/aiwash-scorer --since 1d`.
 - **Email "aiwash-poller-errors".** Two hourly polls in a row failed. Usually EDGAR rate-limiting or downtime; it recovers on its own. Check the user agent if it doesn't.
-- **Site shows "Snapshot copy".** The browser couldn't reach CloudFront and fell back to `docs/data.json` in the repo.
+- **Site footer says "showing the saved snapshot".** The browser couldn't reach CloudFront and fell back to `web/public/data.json`, bundled with the site.
 
 ## Concurrency note
 
