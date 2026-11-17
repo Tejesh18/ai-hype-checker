@@ -11,7 +11,7 @@ resource "aws_cloudfront_origin_access_control" "data" {
 
 resource "aws_cloudfront_distribution" "site_data" {
   enabled         = true
-  comment         = "AI-Washing Detector site data"
+  comment         = "AI Hype Checker site data"
   price_class     = "PriceClass_100" # US/Canada/Europe edges only; cheapest
   is_ipv6_enabled = true
 

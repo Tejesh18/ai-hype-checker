@@ -1,14 +1,16 @@
-# AI-Washing Detector
+# AI Hype Checker
 
-Every company says "AI" now. This reads every sentence about AI in recent 10-K filings and labels it: a claim you can check, a claim you can't, a risk warning, or background. A small AWS pipeline checks SEC EDGAR every hour, so new filings show up on their own.
+**How much of what big companies say about AI can actually be checked?**
 
-**Live: [tejesh18.github.io/ai-washing-detector](https://tejesh18.github.io/ai-washing-detector/)**: company table, every sentence with a link to the filing, and a box to paste your own disclosure text and see what reads as vague.
+Every company says "AI" now. This reads every sentence about AI in their annual reports (10-K filings) and labels it: a claim you can check, a claim you can't, a risk warning, or background. A small AWS pipeline checks SEC EDGAR every hour, so new filings show up on their own.
 
-[![Company table on the live site](docs/screenshot.png)](https://tejesh18.github.io/ai-washing-detector/)
+**Live: [tejesh18.github.io/ai-hype-checker](https://tejesh18.github.io/ai-hype-checker/)**: company table, every sentence with a link to the filing, and a box to paste your own disclosure text and see what reads as vague.
+
+[![Company table on the live site](docs/screenshot.png)](https://tejesh18.github.io/ai-hype-checker/)
 
 ## Why
 
-I work around equity research, and over the last two years "AI" has spread through every annual report. Some of it describes real work, a lot of it doesn't. The SEC has started charging firms for overstating their AI use, and most of its comment letters on AI disclosures ask for the same thing: be specific. That's measurable, so I measured it.
+I work around equity research, and over the last two years "AI" has spread through every annual report. Some of it describes real work, a lot of it doesn't. The SEC has started charging firms for overstating their AI use, and most of its comment letters on AI disclosures ask for the same thing: be specific. Regulators call overstating it "AI-washing". Whether a claim is specific enough to check is measurable, so I measured it.
 
 ## What it found
 

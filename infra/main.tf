@@ -18,7 +18,7 @@ terraform {
 provider "aws" {
   region = var.region
   default_tags {
-    tags = { project = "ai-washing-detector" }
+    tags = { project = "ai-hype-checker" }
   }
 }
 
