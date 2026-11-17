@@ -79,5 +79,158 @@ def claims() -> None:
     console.print(f"[green]wrote {len(rows)} claims to {CLAIMS_PATH}[/green]")
 
 
+@app.command()
+def sample(
+    per_filing: int = typer.Option(10, help="Max claims to draw from each filing."),
+    seed: int = typer.Option(7),
+    out: Path = typer.Option(Path("labels/to_label.csv")),
+) -> None:
+    """Draw a labeling sample spread evenly across filings.
+
+    A plain random sample would be mostly Microsoft, NVIDIA and Google, who
+    together write over a third of all AI sentences. Capping per filing keeps
+    banks, retailers and Exxon in the set.
+    """
+    import csv
+    import random
+
+    rows = pq.read_table(CLAIMS_PATH).to_pylist()
+    by_filing: dict[tuple[str, int], list[dict]] = defaultdict(list)
+    for r in rows:
+        by_filing[(r["ticker"], r["fiscal_year"])].append(r)
+    rng = random.Random(seed)
+    picked = []
+    for key in sorted(by_filing):
+        group = by_filing[key]
+        picked.extend(rng.sample(group, min(per_filing, len(group))))
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with out.open("w", newline="") as f:
+        w = csv.DictWriter(f, ["claim_id", "ticker", "fiscal_year", "section", "page", "sentence", "label"])
+        w.writeheader()
+        for r in picked:
+            w.writerow({k: r.get(k, "") for k in w.fieldnames})
+    console.print(f"[green]{len(picked)} claims from {len(by_filing)} filings -> {out}[/green]")
+
+
+@app.command()
+def evaluate(
+    methods: str = typer.Option("rules,tfidf,embed,finetune", help="Comma-separated."),
+    out: Path = typer.Option(Path("results/metrics.json")),
+) -> None:
+    """Compare classifiers with 5-fold cross-validation on the labeled set."""
+    import json
+
+    from .model import LABELS, cross_validate, load_labels
+
+    examples = load_labels()
+    names = [m.strip() for m in methods.split(",")]
+    results = cross_validate(examples, names)
+    table = Table("method", "macro F1", "accuracy", *[f"F1 {l}" for l in LABELS])
+    for m, r in results.items():
+        table.add_row(m, f"{r['macro_f1']:.3f}", f"{r['accuracy']:.3f}", *[f"{r['per_class_f1'][l]:.2f}" for l in LABELS])
+    console.print(f"{len(examples)} labeled sentences, 5-fold stratified CV")
+    console.print(table)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps({"n": len(examples), "folds": 5, "results": results}, indent=2))
+
+
+@app.command()
+def score(
+    method: str = typer.Option("", help="Classifier to use. Default: best macro-F1 in results/metrics.json."),
+) -> None:
+    """Label every claim and score each company's AI substance."""
+    import csv
+    import json
+
+    from .model import Example, load_labels, train_full
+
+    if not method:
+        metrics = json.loads(Path("results/metrics.json").read_text())["results"]
+        method = max(metrics, key=lambda m: metrics[m]["macro_f1"])
+    labeled = load_labels()
+    gold = {e.sentence: e.label for e in labeled}
+    predict = train_full(labeled, method)
+
+    claims = pq.read_table(CLAIMS_PATH).to_pylist()
+    preds = predict([Example(c["sentence"], c["section"], "") for c in claims])
+    for c, p in zip(claims, preds):
+        c["label"] = gold.get(c["sentence"], p)
+        c["label_source"] = "human" if c["sentence"] in gold else method
+
+    out = Path("results")
+    out.mkdir(exist_ok=True)
+    fields = ["claim_id", "ticker", "fiscal_year", "section", "page", "label", "label_source", "sentence", "url"]
+    with (out / "claims_scored.csv").open("w", newline="") as f:
+        w = csv.DictWriter(f, fields, extrasaction="ignore")
+        w.writeheader()
+        w.writerows(claims)
+
+    by_filing: dict[tuple[str, int], Counter] = defaultdict(Counter)
+    for c in claims:
+        by_filing[(c["ticker"], c["fiscal_year"])][c["label"]] += 1
+    rows = []
+    for (t, y), n in sorted(by_filing.items()):
+        own = n["concrete"] + n["vague"]
+        total = sum(n.values())
+        rows.append({
+            "ticker": t, "fiscal_year": y, "ai_sentences": total,
+            "concrete": n["concrete"], "vague": n["vague"], "risk": n["risk"], "context": n["context"],
+            "substance": round(n["concrete"] / own, 3) if own else None,
+            "risk_share": round(n["risk"] / total, 3) if total else None,
+        })
+    with (out / "companies.csv").open("w", newline="") as f:
+        w = csv.DictWriter(f, rows[0].keys())
+        w.writeheader()
+        w.writerows(rows)
+
+    table = Table("ticker", "FY", "AI sentences", "concrete", "vague", "risk", "context", "substance")
+    for r in rows:
+        table.add_row(r["ticker"], str(r["fiscal_year"]), str(r["ai_sentences"]), str(r["concrete"]), str(r["vague"]),
+                      str(r["risk"]), str(r["context"]), "-" if r["substance"] is None else f"{r['substance']:.0%}")
+    console.print(f"labeled with [bold]{method}[/bold] ({sum(c['label_source'] == 'human' for c in claims)} human labels kept)")
+    console.print(table)
+
+
+@app.command()
+def site(out: Path = typer.Option(Path("docs/data.json"))) -> None:
+    """Export results for the static site in docs/."""
+    import csv
+    import json
+
+    companies = list(csv.DictReader(Path("results/companies.csv").open()))
+    claims = list(csv.DictReader(Path("results/claims_scored.csv").open()))
+    metrics = json.loads(Path("results/metrics.json").read_text())
+    payload = {
+        "companies": companies,
+        "claims": [
+            {k: c[k] for k in ("ticker", "fiscal_year", "section", "page", "label", "label_source", "sentence", "url")}
+            for c in claims
+        ],
+        "metrics": metrics,
+    }
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(payload, separators=(",", ":")))
+    console.print(f"[green]wrote {out} ({out.stat().st_size // 1024} KB)[/green]")
+
+    # The draft checker on the site runs the TF-IDF model in the browser.
+    # Export exactly what sklearn computes: vocabulary, idf, and the
+    # logistic-regression weights, so the JS can reproduce predictions.
+    from .model import fit_tfidf_pipeline, load_labels
+
+    pipe = fit_tfidf_pipeline(load_labels())
+    vec, clf = pipe.steps[0][1], pipe.steps[1][1]
+    vocab = sorted(vec.vocabulary_, key=vec.vocabulary_.get)
+    model = {
+        "classes": [str(c) for c in clf.classes_],
+        "vocab": vocab,
+        "idf": [round(float(x), 5) for x in vec.idf_],
+        "coef": [[round(float(x), 5) for x in row] for row in clf.coef_],
+        "intercept": [round(float(x), 5) for x in clf.intercept_],
+    }
+    mpath = out.parent / "model.json"
+    mpath.write_text(json.dumps(model, separators=(",", ":")))
+    console.print(f"[green]wrote {mpath} ({mpath.stat().st_size // 1024} KB, {len(vocab)} features)[/green]")
+
+
 if __name__ == "__main__":
     app()
