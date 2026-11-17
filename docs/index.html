@@ -4,276 +4,195 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI-Washing Detector</title>
-<meta name="description" content="Every sentence about AI in 30 recent 10-K filings, sorted into concrete claims, vague claims, risk disclosures and context.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<meta name="description" content="AI claims in SEC 10-K filings, labeled concrete, vague, risk or context.">
 <style>
-  :root {
-    --bg: #fbfaf8; --text: #1d1d1b; --soft: #5f5d58; --faint: #9a978f; --rule: #e6e3dc; --panel: #fff;
-    --concrete: #2f7d4f; --vague: #d08a1e; --risk: #b9483a; --context: #8c8a84;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #141412; --text: #ecebe6; --soft: #a9a69e; --faint: #6e6b65; --rule: #2a2926; --panel: #1b1b19;
-      --concrete: #5fb07f; --vague: #e3a443; --risk: #e0715f; --context: #8f8c85; }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 Inter, system-ui, sans-serif; }
-  main { max-width: 960px; margin: 0 auto; padding: 56px 20px 80px; }
-  a { color: inherit; text-underline-offset: 3px; }
-  h1 { font: 600 clamp(2rem, 5vw, 3rem)/1.1 "Source Serif 4", Georgia, serif; margin: 0 0 14px; letter-spacing: -.01em; }
-  h2 { font: 600 1.5rem/1.2 "Source Serif 4", Georgia, serif; margin: 56px 0 8px; }
-  .dek { font-size: 1.15rem; color: var(--soft); max-width: 60ch; margin: 0; }
-  .byline { margin-top: 16px; font-size: .85rem; color: var(--faint); }
-  .lede { color: var(--soft); max-width: 66ch; }
-
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-top: 32px; }
-  .stat { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 14px 16px; }
-  .stat b { display: block; font: 600 1.8rem/1.1 "Source Serif 4", Georgia, serif; }
-  .stat span { font-size: .85rem; color: var(--soft); }
-
-  .findings { padding-left: 1.1em; max-width: 68ch; }
-  .findings li { margin-bottom: 10px; }
-
-  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: .85rem; color: var(--soft); margin: 12px 0 18px; }
-  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: 0; }
-  .c { background: var(--concrete); } .v { background: var(--vague); } .r { background: var(--risk); } .x { background: var(--context); }
-
-  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-  th { text-align: left; font-weight: 500; color: var(--faint); font-size: .78rem; text-transform: uppercase; letter-spacing: .04em; padding: 8px 6px; border-bottom: 1px solid var(--rule); cursor: pointer; white-space: nowrap; }
-  td { padding: 9px 6px; border-bottom: 1px solid var(--rule); vertical-align: middle; }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .co { font-weight: 500; } .tk { color: var(--faint); font-size: .8rem; margin-left: 6px; }
-  .bar { display: flex; height: 12px; border-radius: 3px; overflow: hidden; min-width: 160px; background: var(--rule); }
-  .bar span { display: block; height: 100%; }
-  .delta.up { color: var(--concrete); } .delta.down { color: var(--risk); }
-  tr.prior td { color: var(--faint); font-size: .82rem; padding-top: 3px; }
-  tr.prior .bar { height: 7px; opacity: .55; }
-
-  .controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
-  textarea { width: 100%; font: inherit; font-size: .95rem; padding: 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); color: var(--text); resize: vertical; }
-  select, input { font: inherit; font-size: .9rem; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); color: var(--text); }
-  input { flex: 1; min-width: 200px; }
-  .claims { list-style: none; padding: 0; margin: 0; }
-  .claims li { padding: 14px 0; border-bottom: 1px solid var(--rule); }
-  .claims p { margin: 6px 0 0; }
-  .meta { font-size: .8rem; color: var(--faint); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-  .chip { font-size: .72rem; font-weight: 600; padding: 2px 8px; border-radius: 99px; color: #fff; text-transform: uppercase; letter-spacing: .03em; }
-  .more { margin-top: 14px; }
-  button { font: inherit; font-size: .9rem; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--rule); background: var(--panel); color: var(--text); cursor: pointer; }
-
-  .metrics td:first-child { font-weight: 500; }
-  footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: .85rem; color: var(--faint); }
-  @media (max-width: 640px) { .hide-sm { display: none; } .bar { min-width: 90px; } }
+  body { margin: 0; font: 14px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #24292f; background: #fff; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 18px 16px 60px; }
+  header { border-bottom: 1px solid #d0d7de; padding-bottom: 10px; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  header p { margin: 4px 0 0; color: #57606a; }
+  a { color: #0969da; text-decoration: none; } a:hover { text-decoration: underline; }
+  nav { display: flex; gap: 2px; margin: 14px 0 12px; border-bottom: 1px solid #d0d7de; }
+  nav button { border: 0; background: none; padding: 8px 12px; font: inherit; color: #57606a; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  nav button.on { color: #24292f; border-bottom-color: #fd8c73; font-weight: 600; }
+  section { display: none; } section.on { display: block; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { padding: 6px 8px; border-bottom: 1px solid #eaeef2; text-align: left; vertical-align: top; }
+  th { font-weight: 600; background: #f6f8fa; cursor: pointer; white-space: nowrap; user-select: none; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  tr.prev td { color: #8c959f; font-size: 13px; border-bottom-color: #f6f8fa; }
+  .note { color: #57606a; margin: 6px 0 12px; max-width: 760px; }
+  .up { color: #1a7f37; } .down { color: #cf222e; }
+  .l-concrete { color: #1a7f37; } .l-vague { color: #9a6700; } .l-risk { color: #cf222e; } .l-context { color: #57606a; }
+  .lab { font-weight: 600; font-size: 12px; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+  input, select, textarea, .btn { font: inherit; border: 1px solid #d0d7de; border-radius: 6px; padding: 5px 8px; background: #fff; color: inherit; }
+  input[type=search] { flex: 1; min-width: 220px; }
+  textarea { width: 100%; box-sizing: border-box; min-height: 120px; }
+  .btn { background: #f6f8fa; cursor: pointer; }
+  .src { color: #8c959f; font-size: 12px; white-space: nowrap; }
+  .muted { color: #8c959f; }
+  footer { margin-top: 40px; color: #8c959f; font-size: 12px; }
+  @media (max-width: 700px) { .hide-sm { display: none; } }
 </style>
 </head>
 <body>
-<main>
+<div class="wrap">
   <header>
-    <h1>Who's AI-washing?</h1>
-    <p class="dek">Every sentence about AI in the last two annual reports of 15 large U.S. companies, sorted into claims you can check, claims you can't, risk warnings and background.</p>
-    <p class="byline">By <a href="https://github.com/Tejesh18">Tejesh Annavarapu</a> · data from SEC EDGAR · <a href="https://github.com/Tejesh18/ai-washing-detector">code and data on GitHub</a></p>
+    <h1>AI-Washing Detector</h1>
+    <p>Sentences about AI in recent 10-K filings, labeled as <span class="l-concrete">concrete</span> (checkable), <span class="l-vague">vague</span>, <span class="l-risk">risk</span> or <span class="l-context">context</span>.
+      <a href="https://github.com/Tejesh18/ai-washing-detector">Source and write-up on GitHub</a>.</p>
   </header>
 
-  <div class="stats" id="stats"></div>
+  <nav>
+    <button data-tab="companies" class="on">Companies</button>
+    <button data-tab="sentences">Sentences</button>
+    <button data-tab="draft">Check a draft</button>
+    <button data-tab="method">Method</button>
+  </nav>
 
-  <h2>What stood out</h2>
-  <ul class="findings" id="findings"></ul>
+  <section id="companies" class="on">
+    <p class="note">Substance = concrete / (concrete + vague): of the sentences where a company talks up its own AI, the share you could actually check. Risk and context sentences don't count either way. Blank if there are fewer than 5 such sentences. Grey rows are the prior year. Click a header to sort.</p>
+    <table id="board">
+      <thead><tr>
+        <th data-k="name">Company</th><th data-k="fiscal_year">FY</th>
+        <th data-k="ai_sentences" class="n">AI sentences</th>
+        <th data-k="concrete" class="n">Concrete</th><th data-k="vague" class="n">Vague</th>
+        <th data-k="risk" class="n hide-sm">Risk</th><th data-k="context" class="n hide-sm">Context</th>
+        <th data-k="substance" class="n">Substance</th><th data-k="delta" class="n">Change</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </section>
 
-  <h2>Leaderboard</h2>
-  <p class="lede"><b>Substance</b> = concrete ÷ (concrete + vague). It only looks at sentences where a company talks up its own AI, so careful risk disclosures don't count against anyone. Companies with fewer than 5 such sentences get no score. Click a column to sort.</p>
-  <div class="legend">
-    <span><i class="c"></i>concrete: checkable (named product, number, dated launch)</span>
-    <span><i class="v"></i>vague: a claim with nothing to check</span>
-    <span><i class="r"></i>risk: AI as a threat, cost or regulation</span>
-    <span><i class="x"></i>context: laws, market, boilerplate</span>
-  </div>
-  <table id="board">
-    <thead><tr>
-      <th data-k="name">Company</th>
-      <th data-k="ai_sentences" class="num">AI sentences</th>
-      <th data-k="mix">Mix</th>
-      <th data-k="substance" class="num">Substance</th>
-      <th data-k="delta" class="num hide-sm">vs prior year</th>
-    </tr></thead>
-    <tbody></tbody>
-  </table>
+  <section id="sentences">
+    <div class="filters">
+      <select id="f-co"><option value="">All companies</option></select>
+      <select id="f-label"><option value="">All labels</option><option>concrete</option><option>vague</option><option>risk</option><option>context</option></select>
+      <input id="f-q" type="search" placeholder="Search text">
+    </div>
+    <p class="note" id="count"></p>
+    <table id="claims"><thead><tr><th>Label</th><th>Sentence</th><th class="hide-sm">Source</th></tr></thead><tbody></tbody></table>
+    <p><button class="btn" id="more">Show more</button></p>
+  </section>
 
-  <h2>Read the sentences</h2>
-  <p class="lede">All of them, with the section and page they came from. Sentences in the labeled set show their guide label; the rest come from the classifier.</p>
-  <div class="controls">
-    <select id="f-co"><option value="">All companies</option></select>
-    <select id="f-label">
-      <option value="">All labels</option><option>concrete</option><option>vague</option><option>risk</option><option>context</option>
-    </select>
-    <input id="f-q" type="search" placeholder="Search, e.g. agents, GPUs, fraud">
-  </div>
-  <p class="meta" id="count"></p>
-  <ul class="claims" id="claims"></ul>
-  <div class="more"><button id="more">Show more</button></div>
+  <section id="draft">
+    <p class="note">Paste disclosure text. Sentences that mention AI are labeled by the TF-IDF model, which runs in this page; the text isn't sent anywhere.</p>
+    <div class="filters">
+      <select id="d-section">
+        <option>Item 1. Business</option>
+        <option>Item 1A. Risk Factors</option>
+        <option>Item 7. Management's Discussion and Analysis</option>
+      </select>
+      <button class="btn" id="check">Label it</button>
+    </div>
+    <textarea id="text">We are leveraging artificial intelligence across our business to drive efficiency and growth. Our AI assistant, launched in March, now handles 40% of customer support chats. Laws governing AI are evolving and could increase our compliance costs.</textarea>
+    <table id="draft-out" style="margin-top:10px"><tbody></tbody></table>
+  </section>
 
-  <h2>Check your own draft</h2>
-  <p class="lede">Paste a paragraph from a draft disclosure. Every sentence that mentions AI gets a label from the TF-IDF model, running entirely in your browser. Nothing you paste leaves this page.</p>
-  <div class="controls">
-    <select id="d-section">
-      <option>Item 1. Business</option>
-      <option>Item 1A. Risk Factors</option>
-      <option>Item 7. Management's Discussion and Analysis</option>
-    </select>
-  </div>
-  <textarea id="draft" rows="6" placeholder="We are leveraging artificial intelligence across our business to drive efficiency and growth. Our AI assistant, launched in March, now handles 40% of customer support chats."></textarea>
-  <div class="more"><button id="check">Check it</button></div>
-  <ul class="claims" id="draft-out"></ul>
+  <section id="method">
+    <p class="note" id="method-note"></p>
+    <table id="metrics"><thead><tr><th>Method</th><th class="n">Macro F1</th><th class="n">Concrete</th><th class="n">Vague</th><th class="n">Risk</th><th class="n">Context</th></tr></thead><tbody></tbody></table>
+    <p class="note">Labeling rules: <a href="https://github.com/Tejesh18/ai-washing-detector/blob/main/labels/GUIDELINES.md">labels/GUIDELINES.md</a>. Full write-up, findings and limitations are in the <a href="https://github.com/Tejesh18/ai-washing-detector#readme">README</a>.</p>
+  </section>
 
-  <h2>How well does the classifier do?</h2>
-  <p class="lede" id="method-lede"></p>
-  <table class="metrics" id="metrics"><thead><tr><th>Method</th><th class="num">Macro F1</th><th class="num">Concrete</th><th class="num">Vague</th><th class="num">Risk</th><th class="num">Context</th></tr></thead><tbody></tbody></table>
-
-  <footer>
-    Built by Tejesh Annavarapu. Filings are fetched from SEC EDGAR; nothing here is investment advice.
-    Labeling rules: <a href="https://github.com/Tejesh18/ai-washing-detector/blob/main/labels/GUIDELINES.md">GUIDELINES.md</a>.
-  </footer>
-</main>
+  <footer>Tejesh Annavarapu · filings from SEC EDGAR · not investment advice</footer>
+</div>
 
 <script>
 const NAMES = { AAPL: "Apple", MSFT: "Microsoft", NVDA: "NVIDIA", AMZN: "Amazon", GOOGL: "Alphabet", META: "Meta",
   TSLA: "Tesla", JPM: "JPMorgan Chase", GS: "Goldman Sachs", BAC: "Bank of America", XOM: "ExxonMobil",
   JNJ: "Johnson & Johnson", WMT: "Walmart", KO: "Coca-Cola", NFLX: "Netflix" };
-const COLORS = { concrete: "var(--concrete)", vague: "var(--vague)", risk: "var(--risk)", context: "var(--context)" };
-const METHOD_NAMES = { rules: "Keyword rules", tfidf: "TF-IDF + logistic regression", embed: "bge-small embeddings + logistic regression", finetune: "bge-small fine-tuned (SetFit)" };
-const pct = x => x == null || x === "" ? "–" : Math.round(x * 100) + "%";
-const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const METHODS = { rules: "Keyword rules", tfidf: "TF-IDF + logistic regression", embed: "bge-small embeddings + logistic regression", finetune: "bge-small fine-tuned" };
+const MIN_CLAIMS = 5;
+const pct = x => x == null ? "" : Math.round(x * 100) + "%";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const lab = l => `<span class="lab l-${l}">${l}</span>`;
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button, section").forEach(x => x.classList.remove("on"));
+  b.classList.add("on"); document.getElementById(b.dataset.tab).classList.add("on");
+});
 
 fetch("data.json").then(r => r.json()).then(data => {
-  // A substance score from one or two sentences says nothing, so it needs
-  // at least MIN_CLAIMS concrete+vague sentences before it's shown.
-  const MIN_CLAIMS = 5;
-  const companies = data.companies.map(c => ({ ...c, fiscal_year: +c.fiscal_year, ai_sentences: +c.ai_sentences,
-    concrete: +c.concrete, vague: +c.vague, risk: +c.risk, context: +c.context,
-    substance: c.substance === "" || (+c.concrete + +c.vague) < MIN_CLAIMS ? null : +c.substance }));
-
-  // latest + prior year per company
-  const byTicker = {};
-  companies.forEach(c => (byTicker[c.ticker] ||= []).push(c));
-  const rows = Object.entries(byTicker).map(([t, list]) => {
+  const rows = data.companies.map(c => {
+    const o = { ...c }; ["fiscal_year", "ai_sentences", "concrete", "vague", "risk", "context"].forEach(k => o[k] = +c[k]);
+    o.substance = o.concrete + o.vague >= MIN_CLAIMS && c.substance !== "" ? +c.substance : null;
+    o.name = NAMES[o.ticker] || o.ticker; return o;
+  });
+  const byT = {}; rows.forEach(r => (byT[r.ticker] ||= []).push(r));
+  const latest = Object.values(byT).map(list => {
     list.sort((a, b) => a.fiscal_year - b.fiscal_year);
-    const cur = list[list.length - 1], prev = list.length > 1 ? list[list.length - 2] : null;
-    const delta = prev && cur.substance != null && prev.substance != null ? cur.substance - prev.substance : null;
-    return { ...cur, name: NAMES[t] || t, prev, delta, mix: cur.risk / cur.ai_sentences };
+    const cur = list.at(-1), prev = list.length > 1 ? list.at(-2) : null;
+    return { ...cur, prev, delta: prev && cur.substance != null && prev.substance != null ? cur.substance - prev.substance : null };
   });
 
-  // stats
-  const claims = data.claims;
-  const total = claims.length;
-  const n = l => claims.filter(c => c.label === l).length;
-  document.getElementById("stats").innerHTML = [
-    [total.toLocaleString(), "sentences about AI"],
-    [rows.length * 2 + "", "10-K filings, 15 companies"],
-    [pct(n("concrete") / total), "are checkable claims"],
-    [pct(n("risk") / total), "are risk warnings"],
-  ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join("");
-
-  // findings are written from the results, see FINDINGS below
-  document.getElementById("findings").innerHTML = FINDINGS.map(f => `<li>${f}</li>`).join("");
-
-  // leaderboard
-  let sortKey = "ai_sentences", desc = true;
-  const mixBar = c => `<div class="bar" title="concrete ${c.concrete} · vague ${c.vague} · risk ${c.risk} · context ${c.context}">${
-    ["concrete", "vague", "risk", "context"].map(k => `<span style="width:${c[k] / c.ai_sentences * 100}%;background:${COLORS[k]}"></span>`).join("")}</div>`;
-  const renderBoard = () => {
-    const sorted = [...rows].sort((a, b) => {
-      const x = a[sortKey], y = b[sortKey];
+  let key = "ai_sentences", desc = true;
+  const cells = r => `<td class="n">${r.ai_sentences}</td><td class="n">${r.concrete}</td><td class="n">${r.vague}</td>
+    <td class="n hide-sm">${r.risk}</td><td class="n hide-sm">${r.context}</td><td class="n">${pct(r.substance)}</td>`;
+  const board = () => {
+    const s = [...latest].sort((a, b) => { const x = a[key], y = b[key];
       if (x == null) return 1; if (y == null) return -1;
-      return (typeof x === "string" ? x.localeCompare(y) : x - y) * (desc ? -1 : 1);
-    });
-    document.querySelector("#board tbody").innerHTML = sorted.map(c => {
-      const d = c.delta == null ? "–" : `<span class="delta ${c.delta > 0 ? "up" : c.delta < 0 ? "down" : ""}">${c.delta > 0 ? "+" : ""}${Math.round(c.delta * 100)} pts</span>`;
-      const prior = c.prev ? `<tr class="prior"><td>FY${c.prev.fiscal_year}</td><td class="num">${c.prev.ai_sentences}</td><td>${mixBar(c.prev)}</td><td class="num">${pct(c.prev.substance)}</td><td class="hide-sm"></td></tr>` : "";
-      return `<tr><td><span class="co">${c.name}</span><span class="tk">${c.ticker} FY${c.fiscal_year}</span></td>
-        <td class="num">${c.ai_sentences}</td><td>${mixBar(c)}</td><td class="num"><b>${pct(c.substance)}</b></td><td class="num hide-sm">${d}</td></tr>${prior}`;
+      return (typeof x === "string" ? x.localeCompare(y) : x - y) * (desc ? -1 : 1); });
+    document.querySelector("#board tbody").innerHTML = s.map(r => {
+      const d = r.delta == null ? "" : `<span class="${r.delta > 0 ? "up" : r.delta < 0 ? "down" : ""}">${r.delta > 0 ? "+" : ""}${Math.round(r.delta * 100)}</span>`;
+      const prev = r.prev ? `<tr class="prev"><td></td><td>${r.prev.fiscal_year}</td>${cells(r.prev)}<td></td></tr>` : "";
+      return `<tr><td>${r.name} <span class="muted">${r.ticker}</span></td><td>${r.fiscal_year}</td>${cells(r)}<td class="n">${d}</td></tr>${prev}`;
     }).join("");
   };
   document.querySelectorAll("#board th").forEach(th => th.onclick = () => {
-    const k = th.dataset.k; desc = sortKey === k ? !desc : k !== "name"; sortKey = k; renderBoard();
-  });
-  renderBoard();
+    desc = key === th.dataset.k ? !desc : th.dataset.k !== "name"; key = th.dataset.k; board(); });
+  board();
 
-  // claim explorer
-  const fCo = document.getElementById("f-co"), fLabel = document.getElementById("f-label"), fQ = document.getElementById("f-q");
-  Object.keys(byTicker).sort((a, b) => (NAMES[a] || a).localeCompare(NAMES[b] || b))
-    .forEach(t => fCo.insertAdjacentHTML("beforeend", `<option value="${t}">${NAMES[t] || t}</option>`));
-  let shown = 30;
-  const renderClaims = () => {
+  const claims = data.claims;
+  const fCo = document.getElementById("f-co"), fL = document.getElementById("f-label"), fQ = document.getElementById("f-q");
+  Object.keys(byT).sort((a, b) => NAMES[a].localeCompare(NAMES[b])).forEach(t => fCo.insertAdjacentHTML("beforeend", `<option value="${t}">${NAMES[t]}</option>`));
+  let shown = 50;
+  const list = () => {
     const q = fQ.value.trim().toLowerCase();
-    const list = claims.filter(c => (!fCo.value || c.ticker === fCo.value) && (!fLabel.value || c.label === fLabel.value)
-      && (!q || c.sentence.toLowerCase().includes(q)));
-    document.getElementById("count").textContent = `${list.length.toLocaleString()} sentences`;
-    document.getElementById("claims").innerHTML = list.slice(0, shown).map(c => `<li>
-      <div class="meta"><span class="chip" style="background:${COLORS[c.label]}">${c.label}</span>
-        <span>${NAMES[c.ticker] || c.ticker} · FY${c.fiscal_year} · ${esc(c.section)} · p.${c.page}</span>
-        <a href="${c.url}" target="_blank" rel="noopener">filing ↗</a>
-        ${c.label_source === "human" ? "<span>labeled set</span>" : ""}</div>
-      <p>${esc(c.sentence)}</p></li>`).join("");
-    document.getElementById("more").style.display = list.length > shown ? "" : "none";
+    const hits = claims.filter(c => (!fCo.value || c.ticker === fCo.value) && (!fL.value || c.label === fL.value) && (!q || c.sentence.toLowerCase().includes(q)));
+    document.getElementById("count").textContent = `${hits.length} of ${claims.length} sentences. Labels marked * are from the labeled set; the rest are model predictions.`;
+    document.querySelector("#claims tbody").innerHTML = hits.slice(0, shown).map(c => `<tr>
+      <td>${lab(c.label)}${c.label_source === "human" ? "*" : ""}</td><td>${esc(c.sentence)}</td>
+      <td class="src hide-sm">${c.ticker} FY${c.fiscal_year}<br>${esc(c.section.replace(/^Item (\w+)\..*/, "Item $1"))}, p.${c.page}<br><a href="${c.url}" target="_blank" rel="noopener">filing</a></td></tr>`).join("");
+    document.getElementById("more").style.display = hits.length > shown ? "" : "none";
   };
-  [fCo, fLabel].forEach(el => el.onchange = () => { shown = 30; renderClaims(); });
-  fQ.oninput = () => { shown = 30; renderClaims(); };
-  document.getElementById("more").onclick = () => { shown += 50; renderClaims(); };
-  renderClaims();
+  [fCo, fL].forEach(el => el.onchange = () => { shown = 50; list(); });
+  fQ.oninput = () => { shown = 50; list(); };
+  document.getElementById("more").onclick = () => { shown += 100; list(); };
+  list();
 
-  // metrics
   const m = data.metrics;
-  document.getElementById("method-lede").textContent =
-    `${m.n} sentences were labeled against the guide. Each method is scored with ${m.folds}-fold stratified cross-validation on the same splits (F1 per class, and macro F1 across all four).`;
+  document.getElementById("method-note").textContent = `${m.n} labeled sentences, ${m.folds}-fold stratified cross-validation, same folds for every method. F1 per label and macro F1.`;
   document.querySelector("#metrics tbody").innerHTML = Object.entries(m.results).map(([k, r]) =>
-    `<tr><td>${METHOD_NAMES[k] || k}</td><td class="num"><b>${r.macro_f1.toFixed(2)}</b></td>${
-      ["concrete", "vague", "risk", "context"].map(l => `<td class="num">${r.per_class_f1[l].toFixed(2)}</td>`).join("")}</tr>`).join("");
+    `<tr><td>${METHODS[k] || k}</td><td class="n">${r.macro_f1.toFixed(2)}</td>${["concrete", "vague", "risk", "context"].map(l => `<td class="n">${r.per_class_f1[l].toFixed(2)}</td>`).join("")}</tr>`).join("");
 });
 
-// --- draft checker: the TF-IDF + logistic regression model, reimplemented ---
-// Mirrors sklearn's TfidfVectorizer(ngram_range=(1, 2), sublinear_tf=True):
-// lowercase, tokens of 2+ word characters, unigrams + bigrams, 1+log(tf),
-// times idf, L2-normalized. Then a dot product per class.
-const AI_ACRONYM = /\b(?:AI|GenAI|LLMs?)\b/;
-const AI_PHRASE = /artificial intelligence|machine learning|large language models?|generative AI|neural network/i;
-let MODEL = null, INDEX = null;
+// Draft checker: sklearn's TfidfVectorizer(ngram_range=(1,2), sublinear_tf=True)
+// + LogisticRegression, re-implemented so it runs without a server.
+const AI = /\b(?:AI|GenAI|LLMs?)\b|artificial intelligence|machine learning|large language models?|generative AI|neural network/;
+const AI_I = /artificial intelligence|machine learning|large language models?|neural network/i;
+let MODEL, INDEX;
 fetch("model.json").then(r => r.json()).then(m => { MODEL = m; INDEX = new Map(m.vocab.map((w, i) => [w, i])); });
-
 function classify(text) {
-  const toks = text.toLowerCase().match(/[\p{L}\p{N}_]{2,}/gu) || [];
-  const grams = [...toks];
-  for (let i = 0; i < toks.length - 1; i++) grams.push(toks[i] + " " + toks[i + 1]);
-  const tf = new Map();
-  grams.forEach(g => { const j = INDEX.get(g); if (j !== undefined) tf.set(j, (tf.get(j) || 0) + 1); });
-  let norm = 0;
-  const x = [];
+  const t = text.toLowerCase().match(/[\p{L}\p{N}_]{2,}/gu) || [];
+  const grams = [...t]; for (let i = 0; i < t.length - 1; i++) grams.push(t[i] + " " + t[i + 1]);
+  const tf = new Map(); grams.forEach(g => { const j = INDEX.get(g); if (j !== undefined) tf.set(j, (tf.get(j) || 0) + 1); });
+  const x = []; let norm = 0;
   tf.forEach((n, j) => { const v = (1 + Math.log(n)) * MODEL.idf[j]; x.push([j, v]); norm += v * v; });
   norm = Math.sqrt(norm) || 1;
-  const scores = MODEL.coef.map((row, k) => x.reduce((s, [j, v]) => s + row[j] * v / norm, MODEL.intercept[k]));
-  return MODEL.classes[scores.indexOf(Math.max(...scores))];
+  const s = MODEL.coef.map((row, k) => x.reduce((a, [j, v]) => a + row[j] * v / norm, MODEL.intercept[k]));
+  return MODEL.classes[s.indexOf(Math.max(...s))];
 }
-
 document.getElementById("check").onclick = () => {
   if (!MODEL) return;
-  const section = document.getElementById("d-section").value;
-  const text = document.getElementById("draft").value || document.getElementById("draft").placeholder;
-  const sentences = text.replace(/\n/g, " ").split(/(?<=[.!?])\s+(?=[A-Z("“])/).filter(s => s.split(/\s+/).length >= 5);
-  const hits = sentences.filter(s => AI_ACRONYM.test(s) || AI_PHRASE.test(s));
-  const tips = { vague: "Nothing here can be checked. Name the product, give a number, or say what changed.",
-    concrete: "Checkable. Make sure you can back it up.", risk: "Reads as a risk disclosure.", context: "Background, not a claim about you." };
-  document.getElementById("draft-out").innerHTML = hits.length ? hits.map(s => {
-    const label = classify(`${section}: ${s}`);
-    return `<li><div class="meta"><span class="chip" style="background:${COLORS[label]}">${label}</span><span>${tips[label]}</span></div><p>${esc(s)}</p></li>`;
-  }).join("") : "<li><p>No sentences mention AI.</p></li>";
+  const sec = document.getElementById("d-section").value;
+  const sents = document.getElementById("text").value.replace(/\n/g, " ").split(/(?<=[.!?])\s+(?=[A-Z("“])/).filter(s => s.split(/\s+/).length >= 5);
+  const hits = sents.filter(s => AI.test(s) || AI_I.test(s));
+  document.querySelector("#draft-out tbody").innerHTML = hits.length
+    ? hits.map(s => `<tr><td>${lab(classify(sec + ": " + s))}</td><td>${esc(s)}</td></tr>`).join("")
+    : `<tr><td class="muted">No sentences mention AI.</td></tr>`;
 };
-
-const FINDINGS = [
-  "<b>Apple went from 6 AI sentences to 47 in one year, and none of them is a checkable claim.</b> 39 of the 47 are risk warnings: lawsuits, regulation, safety, compute supply.",
-  "<b>NVIDIA backs its AI talk up the most.</b> 38 concrete claims in its FY2025 10-K (named products, launch dates, a 2.5x throughput number) and the highest substance score in the set.",
-  "<b>Tesla talks more and says less.</b> Its AI sentences more than doubled (20 to 47) while substance fell from 75% to 37%: vague claims went from 2 to 17.",
-  "<b>The big banks don't hype AI at all.</b> JPMorgan and Goldman mention AI 20 to 28 times each, and every mention is a risk warning or background. Not one sentence promotes their own AI.",
-  "<b>Walmart's AI talk is all adjectives.</b> Eight claims about \"AI-powered tools\" in FY2026, none with a product, number or result attached.",
-];
 </script>
 </body>
 </html>
