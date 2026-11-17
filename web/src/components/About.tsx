@@ -13,10 +13,11 @@ export function About({ data }: { data: SiteData }) {
     <div className="plain">
       <h2>About</h2>
       <p>
-        I'm Tejesh. I work on data and AI systems around equity research, and "AI" now shows up in every annual report
-        I see. The SEC has started fining companies for overstating their AI, and its letters to companies mostly ask
-        one thing: be specific. Whether a sentence is specific enough to check turned out to be something you can
-        measure.
+        I'm Tejesh. I work closely with equity research analysts, building the portal they use to connect with their
+        clients, and one thing I keep hearing is that clients want to invest in companies that are actually doing AI,
+        not just talking about it. Meanwhile "AI" now shows up in every annual report. The SEC has started fining
+        companies for overstating their AI, and its letters to companies mostly ask one thing: be specific. Whether a
+        sentence is specific enough to check turned out to be something you can measure.
       </p>
       <p>
         Every hour a small job on AWS checks the SEC for new annual reports from these companies, pulls out every

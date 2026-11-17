@@ -10,7 +10,7 @@ Every company says "AI" now. This reads every sentence about AI in their annual 
 
 ## Why
 
-I work around equity research, and over the last two years "AI" has spread through every annual report. Some of it describes real work, a lot of it doesn't. The SEC has started charging firms for overstating their AI use, and most of its comment letters on AI disclosures ask for the same thing: be specific. Regulators call overstating it "AI-washing". Whether a claim is specific enough to check is measurable, so I measured it.
+I work closely with equity research analysts, building the portal they use to connect with their clients, and one thing I keep hearing is that clients want to invest in companies that are actually doing AI, not just talking about it. Meanwhile "AI" now shows up in every annual report. The SEC has started charging firms for overstating their AI use (regulators call it "AI-washing"), and most of its comment letters on AI disclosures ask for the same thing: be specific. Whether a claim is specific enough to check is measurable, so I measured it.
 
 ## What it found
 
