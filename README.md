@@ -4,9 +4,9 @@
 
 Every company says "AI" now. This reads every sentence about AI in their annual reports (10-K filings) and labels it: a claim you can check, a claim you can't, a risk warning, or background. A small AWS pipeline checks SEC EDGAR every hour, so new filings show up on their own.
 
-**Live: [tejesh18.github.io/ai-hype-checker](https://tejesh18.github.io/ai-hype-checker/)**: company table, every sentence with a link to the filing, and a box to paste your own disclosure text and see what reads as vague.
+**Live: [tejesh18.github.io/ai-hype-checker](https://tejesh18.github.io/ai-hype-checker/)**: each company's annual report marked up like you'd mark it with a highlighter (green if you could check it, yellow if it's just a claim, red if it's a risk warning), with every sentence linked to its page in the filing. There's also a box to paste your own text and see how it reads.
 
-[![Company table on the live site](docs/screenshot.png)](https://tejesh18.github.io/ai-hype-checker/)
+[![Each company's AI sentences as highlighter marks](docs/screenshot.png)](https://tejesh18.github.io/ai-hype-checker/)
 
 ## Why
 

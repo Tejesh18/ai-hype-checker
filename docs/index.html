@@ -4,203 +4,314 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Hype Checker</title>
-<meta name="description" content="AI claims in SEC 10-K filings, labeled concrete, vague, risk or context.">
+<meta name="description" content="Every sentence about AI in big companies' annual reports, marked up with a highlighter: what you can check, and what's just talk.">
 <style>
-  body { margin: 0; font: 14px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #24292f; background: #fff; }
-  .wrap { max-width: 1040px; margin: 0 auto; padding: 18px 16px 60px; }
-  header { border-bottom: 1px solid #d0d7de; padding-bottom: 10px; }
-  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
-  header p { margin: 4px 0 0; color: #57606a; }
-  a { color: #0969da; text-decoration: none; } a:hover { text-decoration: underline; }
-  nav { display: flex; gap: 2px; margin: 14px 0 12px; border-bottom: 1px solid #d0d7de; }
-  nav button { border: 0; background: none; padding: 8px 12px; font: inherit; color: #57606a; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-  nav button.on { color: #24292f; border-bottom-color: #fd8c73; font-weight: 600; }
-  section { display: none; } section.on { display: block; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { padding: 6px 8px; border-bottom: 1px solid #eaeef2; text-align: left; vertical-align: top; }
-  th { font-weight: 600; background: #f6f8fa; cursor: pointer; white-space: nowrap; user-select: none; }
+  :root {
+    --paper: #fffdf8; --desk: #efede6; --ink: #222; --soft: #666; --faint: #999; --rule: #dedad0;
+    --hl-concrete: #b8f0c2; --hl-vague: #ffe680; --hl-risk: #ffc9c2; --hl-context: #e6e3da;
+    --link: #1f4fbf;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--desk); color: var(--ink); font: 16px/1.6 Georgia, "Times New Roman", serif; }
+  a { color: var(--link); }
+  .sans { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  header.bar { max-width: 1060px; margin: 0 auto; padding: 18px 20px 0; display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; }
+  header.bar .name { font-weight: bold; font-size: 18px; color: var(--ink); text-decoration: none; }
+  header.bar nav { display: flex; gap: 16px; font-size: 14px; }
+  header.bar nav a { color: var(--soft); text-decoration: none; } header.bar nav a.on { color: var(--ink); text-decoration: underline; }
+  main { max-width: 1060px; margin: 0 auto; padding: 0 20px 60px; }
+  .view { display: none; } .view.on { display: block; }
+
+  mark { padding: 1px 2px; border-radius: 2px; color: inherit; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+  mark.concrete { background: var(--hl-concrete); } mark.vague { background: var(--hl-vague); }
+  mark.risk { background: var(--hl-risk); } mark.context { background: none; border-bottom: 2px solid #c9c4b6; border-radius: 0; }
+
+  .intro { max-width: 680px; margin: 26px 0 8px; font-size: 18px; }
+  .intro p { margin: 0 0 10px; }
+  .key { font-size: 14px; color: var(--soft); margin: 4px 0 22px; }
+  .key mark { margin-right: 4px; }
+  .find { font: 15px/1.4 -apple-system, "Segoe UI", sans-serif; padding: 7px 10px; border: 1px solid #c8c3b6; background: #fff; border-radius: 3px; width: 240px; }
+
+  /* the wall of filings */
+  .wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 22px; margin-top: 18px; }
+  .sheet { background: var(--paper); border: 1px solid var(--rule); padding: 14px 14px 12px; color: var(--ink); text-decoration: none; display: block;
+           box-shadow: 0 1px 0 #d6d2c6, 0 2px 0 #e7e3d9; transition: transform .12s; }
+  .sheet:hover { transform: rotate(-.6deg) translateY(-2px); }
+  .sheet .who { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 15px; }
+  .sheet .who img { width: 20px; height: 20px; }
+  .sheet .form { font: 11px/1.3 -apple-system, "Segoe UI", sans-serif; color: var(--faint); letter-spacing: .04em; text-transform: uppercase; margin: 2px 0 10px; }
+  .lines { display: flex; flex-direction: column; gap: 3px; min-height: 80px; }
+  .lines i { display: block; height: 5px; border-radius: 1px; background: #ebe7dd; }
+  .lines i.concrete { background: #6fcf83; } .lines i.vague { background: #f2c94c; } .lines i.risk { background: #eb9a8f; }
+  .sheet .tally { font: 13px/1.4 -apple-system, "Segoe UI", sans-serif; color: var(--soft); margin-top: 10px; }
+  .notes { max-width: 680px; margin-top: 40px; }
+  .notes h3 { font-size: 15px; font-family: -apple-system, "Segoe UI", sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--soft); }
+  .notes p { margin: 0 0 12px; }
+
+  /* one filing */
+  .doc { background: var(--paper); border: 1px solid var(--rule); margin-top: 22px; padding: 34px 44px 40px; max-width: 860px; }
+  .doc .head { display: flex; align-items: center; gap: 12px; }
+  .doc .head img { width: 32px; height: 32px; }
+  .doc h1 { font-size: 26px; margin: 0; }
+  .doc .form { font: 12px -apple-system, "Segoe UI", sans-serif; color: var(--faint); letter-spacing: .05em; text-transform: uppercase; margin-top: 2px; }
+  .summary { font-size: 19px; margin: 22px 0 6px; }
+  .sub { color: var(--soft); margin: 0 0 18px; }
+  .filters { font: 14px -apple-system, "Segoe UI", sans-serif; margin: 18px 0 8px; display: flex; gap: 8px; flex-wrap: wrap; }
+  .filters button { font: inherit; border: 1px solid #cfc9bb; background: #fff; padding: 4px 10px; border-radius: 3px; cursor: pointer; }
+  .filters button.off { opacity: .4; }
+  .page { display: grid; grid-template-columns: 70px 1fr; gap: 16px; padding: 14px 0; border-top: 1px dashed var(--rule); }
+  .page .pno { font: 12px -apple-system, "Segoe UI", sans-serif; color: var(--faint); padding-top: 4px; }
+  .page .pno small { display: block; }
+  .page p { margin: 0 0 10px; }
+  .page .src { font: 12px -apple-system, "Segoe UI", sans-serif; }
+  .back { display: inline-block; margin-top: 18px; font: 14px -apple-system, "Segoe UI", sans-serif; }
+
+  /* rankings / draft / about pages */
+  .plain { background: var(--paper); border: 1px solid var(--rule); padding: 28px 36px; margin-top: 22px; max-width: 900px; }
+  .plain h2 { margin-top: 0; }
+  table { border-collapse: collapse; width: 100%; font: 15px -apple-system, "Segoe UI", sans-serif; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--rule); text-align: left; }
+  th { font-weight: 600; color: var(--soft); cursor: pointer; white-space: nowrap; }
   td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
-  tr.prev td { color: #8c959f; font-size: 13px; border-bottom-color: #f6f8fa; }
-  .note { color: #57606a; margin: 6px 0 12px; max-width: 760px; }
-  .up { color: #1a7f37; } .down { color: #cf222e; }
-  .l-concrete { color: #1a7f37; } .l-vague { color: #9a6700; } .l-risk { color: #cf222e; } .l-context { color: #57606a; }
-  .lab { font-weight: 600; font-size: 12px; }
-  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
-  input, select, textarea, .btn { font: inherit; border: 1px solid #d0d7de; border-radius: 6px; padding: 5px 8px; background: #fff; color: inherit; }
-  input[type=search] { flex: 1; min-width: 220px; }
-  textarea { width: 100%; box-sizing: border-box; min-height: 120px; }
-  .btn { background: #f6f8fa; cursor: pointer; }
-  .src { color: #8c959f; font-size: 12px; white-space: nowrap; }
-  .muted { color: #8c959f; }
-  footer { margin-top: 40px; color: #8c959f; font-size: 12px; }
-  @media (max-width: 700px) { .hide-sm { display: none; } }
+  td img { width: 16px; height: 16px; vertical-align: -3px; margin-right: 6px; }
+  textarea { width: 100%; min-height: 140px; font: 16px/1.5 Georgia, serif; padding: 12px; border: 1px solid #c8c3b6; }
+  select, .btn { font: 15px -apple-system, "Segoe UI", sans-serif; padding: 6px 10px; border: 1px solid #c8c3b6; background: #fff; border-radius: 3px; }
+  .btn { cursor: pointer; }
+  .out p { margin: 10px 0; }
+  footer { max-width: 1060px; margin: 0 auto; padding: 0 20px 30px; font: 13px -apple-system, "Segoe UI", sans-serif; color: var(--faint); }
+  @media (max-width: 640px) { .doc, .plain { padding: 20px 16px; } .page { grid-template-columns: 1fr; gap: 4px; } .hide-sm { display: none; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>AI Hype Checker</h1>
-    <p>How much of what big companies say about AI can actually be checked? Every AI sentence in their annual reports, labeled as <span class="l-concrete">concrete</span> (checkable), <span class="l-vague">vague</span>, <span class="l-risk">risk</span> or <span class="l-context">context</span>.
-      <a href="https://github.com/Tejesh18/ai-hype-checker">Source and write-up on GitHub</a>.</p>
-    <p class="muted" id="updated"></p>
-  </header>
-
+<header class="bar sans">
+  <a class="name" href="#/" style="font-family: Georgia, serif">AI Hype Checker</a>
   <nav>
-    <button data-tab="companies" class="on">Companies</button>
-    <button data-tab="sentences">Sentences</button>
-    <button data-tab="draft">Check a draft</button>
-    <button data-tab="method">Method</button>
+    <a href="#/" data-nav="home">The filings</a>
+    <a href="#/rankings" data-nav="rankings">Rankings</a>
+    <a href="#/draft" data-nav="draft">Check your own text</a>
+    <a href="#/about" data-nav="about">About</a>
   </nav>
+</header>
 
-  <section id="companies" class="on">
-    <p class="note">Substance = concrete / (concrete + vague): of the sentences where a company talks up its own AI, the share you could actually check. Risk and context sentences don't count either way. Blank if there are fewer than 5 such sentences. Grey rows are the prior year. Click a header to sort.</p>
-    <table id="board">
-      <thead><tr>
-        <th data-k="name">Company</th><th data-k="fiscal_year">FY</th>
-        <th data-k="ai_sentences" class="n">AI sentences</th>
-        <th data-k="concrete" class="n">Concrete</th><th data-k="vague" class="n">Vague</th>
-        <th data-k="risk" class="n hide-sm">Risk</th><th data-k="context" class="n hide-sm">Context</th>
-        <th data-k="substance" class="n">Substance</th><th data-k="delta" class="n">Change</th>
-      </tr></thead>
-      <tbody></tbody>
-    </table>
-  </section>
-
-  <section id="sentences">
-    <div class="filters">
-      <select id="f-co"><option value="">All companies</option></select>
-      <select id="f-label"><option value="">All labels</option><option>concrete</option><option>vague</option><option>risk</option><option>context</option></select>
-      <input id="f-q" type="search" placeholder="Search text">
+<main>
+  <section class="view" id="home">
+    <div class="intro">
+      <p>Every big company says it's doing AI now. I wanted to know how much of that is real, so I went through what they actually told the SEC in their annual reports, sentence by sentence, with a highlighter.</p>
     </div>
-    <p class="note" id="count"></p>
-    <table id="claims"><thead><tr><th>Label</th><th>Sentence</th><th class="hide-sm">Source</th></tr></thead><tbody></tbody></table>
-    <p><button class="btn" id="more">Show more</button></p>
-  </section>
-
-  <section id="draft">
-    <p class="note">Paste disclosure text. Sentences that mention AI are labeled by the TF-IDF model, which runs in this page; the text isn't sent anywhere.</p>
-    <div class="filters">
-      <select id="d-section">
-        <option>Item 1. Business</option>
-        <option>Item 1A. Risk Factors</option>
-        <option>Item 7. Management's Discussion and Analysis</option>
-      </select>
-      <button class="btn" id="check">Label it</button>
+    <div class="key sans">
+      <mark class="concrete">green</mark> you could check it (a product, a number, a date)
+      &nbsp; <mark class="vague">yellow</mark> a claim with nothing to check
+      &nbsp; <mark class="risk">red</mark> AI as a risk
+      &nbsp; <mark class="context">underline</mark> background
     </div>
-    <textarea id="text">We are leveraging artificial intelligence across our business to drive efficiency and growth. Our AI assistant, launched in March, now handles 40% of customer support chats. Laws governing AI are evolving and could increase our compliance costs.</textarea>
-    <table id="draft-out" style="margin-top:10px"><tbody></tbody></table>
+    <input class="find" id="find" type="search" placeholder="Find a company" aria-label="Find a company">
+    <div class="wall" id="wall"></div>
+    <div class="notes">
+      <h3>Things I noticed</h3>
+      <div id="notes"></div>
+    </div>
   </section>
 
-  <section id="method">
-    <p class="note" id="method-note"></p>
-    <table id="metrics"><thead><tr><th>Method</th><th class="n">Macro F1</th><th class="n">Concrete</th><th class="n">Vague</th><th class="n">Risk</th><th class="n">Context</th></tr></thead><tbody></tbody></table>
-    <p class="note">Labeling rules: <a href="https://github.com/Tejesh18/ai-hype-checker/blob/main/labels/GUIDELINES.md">labels/GUIDELINES.md</a>. Full write-up, findings and limitations are in the <a href="https://github.com/Tejesh18/ai-hype-checker#readme">README</a>.</p>
+  <section class="view" id="company">
+    <a class="back" href="#/">&larr; all filings</a>
+    <article class="doc" id="doc"></article>
   </section>
 
-  <footer>Tejesh Annavarapu · filings from SEC EDGAR · not investment advice</footer>
-</div>
+  <section class="view" id="rankings">
+    <div class="plain">
+      <h2>Rankings</h2>
+      <p class="sub">Substance is green &divide; (green + yellow): of the times a company talks up its own AI, how often it says something you could check. Red and underlined sentences don't count either way. Under 5 claims, no score.</p>
+      <table id="board"><thead><tr>
+        <th data-k="name">Company</th><th data-k="ai_sentences" class="n">AI sentences</th>
+        <th data-k="concrete" class="n">Green</th><th data-k="vague" class="n">Yellow</th>
+        <th data-k="risk" class="n hide-sm">Red</th><th data-k="substance" class="n">Substance</th><th data-k="delta" class="n hide-sm">vs last year</th>
+      </tr></thead><tbody></tbody></table>
+    </div>
+  </section>
+
+  <section class="view" id="draft">
+    <div class="plain">
+      <h2>Check your own text</h2>
+      <p class="sub">Writing a disclosure or a press release? Paste it here and the same model marks it up. It runs in your browser; nothing is sent anywhere.</p>
+      <p><select id="d-section">
+        <option>Item 1. Business</option><option>Item 1A. Risk Factors</option><option>Item 7. Management's Discussion and Analysis</option>
+      </select> <button class="btn" id="check">Highlight it</button></p>
+      <textarea id="text">We are leveraging artificial intelligence across our business to drive efficiency and growth. Our AI assistant, launched in March, now handles 40% of customer support chats. Laws governing AI are evolving and could increase our compliance costs.</textarea>
+      <div class="out" id="draft-out"></div>
+    </div>
+  </section>
+
+  <section class="view" id="about">
+    <div class="plain">
+      <h2>About</h2>
+      <p>I'm Tejesh. I work on data and AI systems around equity research, and "AI" now shows up in every annual report I see. The SEC has started fining companies for overstating their AI, and its letters to companies mostly ask one thing: be specific. Whether a sentence is specific enough to check turned out to be something you can measure.</p>
+      <p>Every hour a small job on AWS checks the SEC for new annual reports from these companies, pulls out every sentence that mentions AI, and marks it up with a model trained on 252 sentences I labeled by hand. A filing shows up here a few minutes after it's filed.</p>
+      <p id="m-note" class="sub"></p>
+      <table id="metrics"><thead><tr><th>Method</th><th class="n">Overall F1</th><th class="n">Green</th><th class="n">Yellow</th><th class="n hide-sm">Red</th></tr></thead><tbody></tbody></table>
+      <p class="sub">The model is right about 7 times in 10 on the labels that matter, so read the numbers as a strong hint, not a verdict, and click through to the filing. Code, labels and a longer write-up: <a href="https://github.com/Tejesh18/ai-hype-checker">github.com/Tejesh18/ai-hype-checker</a>.</p>
+    </div>
+  </section>
+</main>
+<footer id="foot">Tejesh Annavarapu · filings from SEC EDGAR · not investment advice</footer>
 
 <script>
-const NAMES = { AAPL: "Apple", MSFT: "Microsoft", NVDA: "NVIDIA", AMZN: "Amazon", GOOGL: "Alphabet", META: "Meta",
-  TSLA: "Tesla", JPM: "JPMorgan Chase", GS: "Goldman Sachs", BAC: "Bank of America", XOM: "ExxonMobil",
-  JNJ: "Johnson & Johnson", WMT: "Walmart", KO: "Coca-Cola", NFLX: "Netflix" };
-const METHODS = { rules: "Keyword rules", tfidf: "TF-IDF + logistic regression", embed: "bge-small embeddings + logistic regression", finetune: "bge-small fine-tuned" };
-const MIN_CLAIMS = 5;
-const pct = x => x == null ? "" : Math.round(x * 100) + "%";
+const CO = {
+  AAPL: ["Apple", "apple.com"], MSFT: ["Microsoft", "microsoft.com"], NVDA: ["NVIDIA", "nvidia.com"], AMZN: ["Amazon", "amazon.com"],
+  GOOGL: ["Alphabet", "google.com"], META: ["Meta", "meta.com"], TSLA: ["Tesla", "tesla.com"], JPM: ["JPMorgan Chase", "jpmorganchase.com"],
+  GS: ["Goldman Sachs", "goldmansachs.com"], BAC: ["Bank of America", "bankofamerica.com"], XOM: ["ExxonMobil", "exxonmobil.com"],
+  JNJ: ["Johnson & Johnson", "jnj.com"], WMT: ["Walmart", "walmart.com"], KO: ["Coca-Cola", "coca-colacompany.com"], NFLX: ["Netflix", "netflix.com"],
+};
+const logo = t => `https://www.google.com/s2/favicons?domain=${CO[t] ? CO[t][1] : "sec.gov"}&sz=64`;
+const nm = t => CO[t] ? CO[t][0] : t;
+const WORD = { concrete: "green", vague: "yellow", risk: "red", context: "underlined" };
+const MIN = 5;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const lab = l => `<span class="lab l-${l}">${l}</span>`;
+const clean = s => s.replace(/^[\s•·\-–]+/, "");
+const pct = x => Math.round(x * 100) + "%";
+let D;
 
-document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
-  document.querySelectorAll("nav button, section").forEach(x => x.classList.remove("on"));
-  b.classList.add("on"); document.getElementById(b.dataset.tab).classList.add("on");
-});
+function load(data) {
+  const byT = {};
+  data.companies.forEach(c => {
+    const r = { ...c }; ["fiscal_year", "ai_sentences", "concrete", "vague", "risk", "context"].forEach(k => r[k] = +c[k]);
+    r.substance = r.concrete + r.vague >= MIN && c.substance != null && c.substance !== "" ? +c.substance : null;
+    (byT[r.ticker] ||= []).push(r);
+  });
+  const companies = Object.entries(byT).map(([t, list]) => {
+    list.sort((a, b) => a.fiscal_year - b.fiscal_year);
+    const cur = list.at(-1), prev = list.length > 1 ? list.at(-2) : null;
+    return { ...cur, name: nm(t), prev, delta: prev && cur.substance != null && prev.substance != null ? cur.substance - prev.substance : null };
+  });
+  return { companies, claims: data.claims, metrics: data.metrics, updated: data.updated };
+}
 
-// Live data comes from the AWS pipeline (CloudFront in front of S3). If that's
-// unreachable the page falls back to the snapshot committed in this repo.
+const claimsOf = c => D.claims.filter(x => x.ticker === c.ticker && +x.fiscal_year === c.fiscal_year);
+
+function home() {
+  const q = document.getElementById("find").value.trim().toLowerCase();
+  const cs = [...D.companies].filter(c => !q || c.name.toLowerCase().includes(q) || c.ticker.toLowerCase().startsWith(q))
+    .sort((a, b) => b.ai_sentences - a.ai_sentences);
+  document.getElementById("wall").innerHTML = cs.map(c => {
+    // one line per AI sentence, in the order they appear in the filing
+    const lines = claimsOf(c).slice(0, 60).map(x => `<i class="${x.label}" style="width:${35 + (x.sentence.length * 7) % 65}%"></i>`).join("");
+    const tally = c.ai_sentences ? `${c.ai_sentences} AI sentences, ${c.concrete} green` : "doesn't mention AI";
+    return `<a class="sheet" href="#/c/${c.ticker}"><div class="who"><img src="${logo(c.ticker)}" alt="">${esc(c.name)}</div>
+      <div class="form">10-K · fiscal ${c.fiscal_year}</div><div class="lines">${lines}</div><div class="tally">${tally}</div></a>`;
+  }).join("");
+
+  const notes = [];
+  const grew = D.companies.filter(c => c.prev).sort((a, b) => (b.ai_sentences - b.prev.ai_sentences) - (a.ai_sentences - a.prev.ai_sentences))[0];
+  if (grew) notes.push(`<a href="#/c/${grew.ticker}">${grew.name}</a> went from ${grew.prev.ai_sentences} AI sentences to ${grew.ai_sentences} in one year. ${grew.concrete ? `Only ${grew.concrete} are green.` : "Not one is green."}`);
+  const best = D.companies.filter(c => c.substance != null).sort((a, b) => b.concrete - a.concrete)[0];
+  if (best) notes.push(`<a href="#/c/${best.ticker}">${best.name}</a> has the most green by far: ${best.concrete} sentences that name an actual product, number or launch.`);
+  const drop = D.companies.filter(c => c.delta != null).sort((a, b) => a.delta - b.delta)[0];
+  if (drop && drop.delta < 0) notes.push(`<a href="#/c/${drop.ticker}">${drop.name}</a> doubled its AI talk (${drop.prev.ai_sentences} to ${drop.ai_sentences}) while the share you could check fell from ${pct(drop.prev.substance)} to ${pct(drop.substance)}.`);
+  const quiet = D.companies.filter(c => c.ai_sentences >= 15 && c.concrete + c.vague === 0);
+  if (quiet.length) notes.push(`${quiet.map(c => `<a href="#/c/${c.ticker}">${c.name}</a>`).join(" and ")} mention AI ${quiet.map(c => c.ai_sentences).join(" and ")} times and never once brag about their own. It's all red and underline.`);
+  const buzz = D.companies.filter(c => c.substance === 0 && c.vague >= MIN)[0];
+  if (buzz) notes.push(`<a href="#/c/${buzz.ticker}">${buzz.name}</a>'s report is ${buzz.vague} yellow sentences about "AI-powered tools" and no green at all.`);
+  document.getElementById("notes").innerHTML = notes.map(n => `<p>${n}</p>`).join("");
+}
+document.getElementById("find").addEventListener("input", home);
+
+function company(t) {
+  const c = D.companies.find(x => x.ticker === t);
+  if (!c) { location.hash = "#/"; return; }
+  const all = claimsOf(c);
+  const own = c.concrete + c.vague;
+  let summary;
+  if (!c.ai_sentences) summary = `${c.name} doesn't mention AI in this report.`;
+  else if (!own) summary = `${c.ai_sentences} sentences about AI, and not one of them talks up ${c.name}'s own AI. It's all risk warnings and background.`;
+  else summary = `${c.ai_sentences} sentences about AI. When ${c.name} talks up its own AI, <mark class="${c.concrete ? "concrete" : "risk"}">${c.concrete} of ${own}</mark> say something you could actually check.`;
+  const last = c.prev ? `The year before: ${c.prev.ai_sentences} AI sentences, ${c.prev.concrete} green, ${c.prev.vague} yellow.` : "";
+
+  const pages = {};
+  all.forEach(x => (pages[x.page] ||= []).push(x));
+  const on = new Set(["concrete", "vague", "risk", "context"]);
+  const counts = k => all.filter(x => x.label === k).length;
+
+  const draw = () => {
+    const body = Object.keys(pages).map(Number).sort((a, b) => a - b).map(p => {
+      const xs = pages[p].filter(x => on.has(x.label));
+      if (!xs.length) return "";
+      return `<div class="page"><div class="pno">page ${p}<small>${esc(xs[0].section === "Cover" ? "opening pages" : xs[0].section.replace(/^Item (\w+)\. /, "Item $1, "))}</small></div><div>
+        ${xs.map(x => `<p><mark class="${x.label}" title="${WORD[x.label]}">${esc(clean(x.sentence))}</mark></p>`).join("")}
+        <span class="src"><a href="${xs[0].url}" target="_blank" rel="noopener">open the filing</a></span></div></div>`;
+    }).join("");
+    document.getElementById("doc").innerHTML = `
+      <div class="head"><img src="${logo(c.ticker)}" alt=""><div><h1>${esc(c.name)}</h1><div class="form">Form 10-K · fiscal ${c.fiscal_year} · filed with the SEC</div></div></div>
+      <p class="summary">${summary}</p><p class="sub">${last}</p>
+      <div class="filters">${["vague", "concrete", "risk", "context"].filter(k => counts(k)).map(k =>
+        `<button data-k="${k}" class="${on.has(k) ? "" : "off"}"><mark class="${k}">${WORD[k]}</mark> ${counts(k)}</button>`).join("")}</div>
+      ${body || "<p>Nothing to show.</p>"}`;
+    document.querySelectorAll(".filters button").forEach(b => b.onclick = () => {
+      const k = b.dataset.k; on.has(k) ? on.delete(k) : on.add(k); draw(); });
+  };
+  draw();
+  window.scrollTo(0, 0);
+}
+
+let key = "ai_sentences", desc = true;
+function rankings() {
+  const s = [...D.companies].sort((a, b) => { const x = a[key], y = b[key];
+    if (x == null) return 1; if (y == null) return -1;
+    return (typeof x === "string" ? x.localeCompare(y) : x - y) * (desc ? -1 : 1); });
+  document.querySelector("#board tbody").innerHTML = s.map(c => `<tr>
+    <td><img src="${logo(c.ticker)}" alt=""><a href="#/c/${c.ticker}">${esc(c.name)}</a></td><td class="n">${c.ai_sentences}</td>
+    <td class="n">${c.concrete}</td><td class="n">${c.vague}</td><td class="n hide-sm">${c.risk}</td>
+    <td class="n">${c.substance == null ? "–" : pct(c.substance)}</td>
+    <td class="n hide-sm">${c.delta == null ? "" : (c.delta > 0 ? "+" : "") + Math.round(c.delta * 100) + " pts"}</td></tr>`).join("");
+}
+document.querySelectorAll("#board th").forEach(th => th.onclick = () => {
+  desc = key === th.dataset.k ? !desc : th.dataset.k !== "name"; key = th.dataset.k; rankings(); });
+
+function about() {
+  const m = D.metrics, names = { rules: "Keyword rules", tfidf: "TF-IDF + logistic regression", embed: "Embeddings + logistic regression (what the site uses)", finetune: "Fine-tuned small model" };
+  document.getElementById("m-note").textContent = `How each approach did against the ${m.n} labeled sentences, ${m.folds}-fold cross-validation (1.0 is perfect):`;
+  document.querySelector("#metrics tbody").innerHTML = Object.entries(m.results).map(([k, r]) =>
+    `<tr><td>${names[k] || k}</td><td class="n">${r.macro_f1.toFixed(2)}</td><td class="n">${r.per_class_f1.concrete.toFixed(2)}</td>
+     <td class="n">${r.per_class_f1.vague.toFixed(2)}</td><td class="n hide-sm">${r.per_class_f1.risk.toFixed(2)}</td></tr>`).join("");
+}
+
+function route() {
+  if (!D) return;
+  const [page, arg] = location.hash.replace(/^#\/?/, "").split("/");
+  const view = page === "c" ? "company" : ["rankings", "draft", "about"].includes(page) ? page : "home";
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === view));
+  document.querySelectorAll("[data-nav]").forEach(a => a.classList.toggle("on", a.dataset.nav === (view === "company" ? "home" : view)));
+  ({ home, company: () => company((arg || "").toUpperCase()), rankings, about, draft: () => {} })[view]();
+}
+window.addEventListener("hashchange", route);
+
 const LIVE = "https://d3l6tnkvdksi5y.cloudfront.net/public/data.json";
 fetch(LIVE).then(r => { if (!r.ok) throw r; return r.json(); })
   .catch(() => fetch("data.json").then(r => r.json()))
   .then(data => {
-  document.getElementById("updated").textContent = data.updated
-    ? `Checked against SEC EDGAR every hour. Last update ${data.updated}.`
-    : "Snapshot copy (live data unavailable).";
-  const rows = data.companies.map(c => {
-    const o = { ...c }; ["fiscal_year", "ai_sentences", "concrete", "vague", "risk", "context"].forEach(k => o[k] = +c[k]);
-    o.substance = o.concrete + o.vague >= MIN_CLAIMS && c.substance != null && c.substance !== "" ? +c.substance : null;
-    o.name = NAMES[o.ticker] || o.ticker; return o;
-  });
-  const byT = {}; rows.forEach(r => (byT[r.ticker] ||= []).push(r));
-  const latest = Object.values(byT).map(list => {
-    list.sort((a, b) => a.fiscal_year - b.fiscal_year);
-    const cur = list.at(-1), prev = list.length > 1 ? list.at(-2) : null;
-    return { ...cur, prev, delta: prev && cur.substance != null && prev.substance != null ? cur.substance - prev.substance : null };
+    D = load(data);
+    if (D.updated) document.getElementById("foot").textContent = `Tejesh Annavarapu · filings from SEC EDGAR, checked every hour (last ${D.updated}) · not investment advice`;
+    route();
   });
 
-  let key = "ai_sentences", desc = true;
-  const cells = r => `<td class="n">${r.ai_sentences}</td><td class="n">${r.concrete}</td><td class="n">${r.vague}</td>
-    <td class="n hide-sm">${r.risk}</td><td class="n hide-sm">${r.context}</td><td class="n">${pct(r.substance)}</td>`;
-  const board = () => {
-    const s = [...latest].sort((a, b) => { const x = a[key], y = b[key];
-      if (x == null) return 1; if (y == null) return -1;
-      return (typeof x === "string" ? x.localeCompare(y) : x - y) * (desc ? -1 : 1); });
-    document.querySelector("#board tbody").innerHTML = s.map(r => {
-      const d = r.delta == null ? "" : `<span class="${r.delta > 0 ? "up" : r.delta < 0 ? "down" : ""}">${r.delta > 0 ? "+" : ""}${Math.round(r.delta * 100)}</span>`;
-      const prev = r.prev ? `<tr class="prev"><td></td><td>${r.prev.fiscal_year}</td>${cells(r.prev)}<td></td></tr>` : "";
-      return `<tr><td>${r.name} <span class="muted">${r.ticker}</span></td><td>${r.fiscal_year}</td>${cells(r)}<td class="n">${d}</td></tr>${prev}`;
-    }).join("");
-  };
-  document.querySelectorAll("#board th").forEach(th => th.onclick = () => {
-    desc = key === th.dataset.k ? !desc : th.dataset.k !== "name"; key = th.dataset.k; board(); });
-  board();
-
-  const claims = data.claims;
-  const fCo = document.getElementById("f-co"), fL = document.getElementById("f-label"), fQ = document.getElementById("f-q");
-  Object.keys(byT).sort((a, b) => NAMES[a].localeCompare(NAMES[b])).forEach(t => fCo.insertAdjacentHTML("beforeend", `<option value="${t}">${NAMES[t]}</option>`));
-  let shown = 50;
-  const list = () => {
-    const q = fQ.value.trim().toLowerCase();
-    const hits = claims.filter(c => (!fCo.value || c.ticker === fCo.value) && (!fL.value || c.label === fL.value) && (!q || c.sentence.toLowerCase().includes(q)));
-    document.getElementById("count").textContent = `${hits.length} of ${claims.length} sentences. Labels marked * are from the labeled set; the rest are model predictions.`;
-    document.querySelector("#claims tbody").innerHTML = hits.slice(0, shown).map(c => `<tr>
-      <td>${lab(c.label)}${c.label_source === "human" ? "*" : ""}</td><td>${esc(c.sentence)}</td>
-      <td class="src hide-sm">${c.ticker} FY${c.fiscal_year}<br>${esc(c.section.replace(/^Item (\w+)\..*/, "Item $1"))}, p.${c.page}<br><a href="${c.url}" target="_blank" rel="noopener">filing</a></td></tr>`).join("");
-    document.getElementById("more").style.display = hits.length > shown ? "" : "none";
-  };
-  [fCo, fL].forEach(el => el.onchange = () => { shown = 50; list(); });
-  fQ.oninput = () => { shown = 50; list(); };
-  document.getElementById("more").onclick = () => { shown += 100; list(); };
-  list();
-
-  const m = data.metrics;
-  document.getElementById("method-note").textContent = `${m.n} labeled sentences, ${m.folds}-fold stratified cross-validation, same folds for every method. F1 per label and macro F1.`;
-  document.querySelector("#metrics tbody").innerHTML = Object.entries(m.results).map(([k, r]) =>
-    `<tr><td>${METHODS[k] || k}</td><td class="n">${r.macro_f1.toFixed(2)}</td>${["concrete", "vague", "risk", "context"].map(l => `<td class="n">${r.per_class_f1[l].toFixed(2)}</td>`).join("")}</tr>`).join("");
-});
-
-// Draft checker: sklearn's TfidfVectorizer(ngram_range=(1,2), sublinear_tf=True)
-// + LogisticRegression, re-implemented so it runs without a server.
-const AI = /\b(?:AI|GenAI|LLMs?)\b|artificial intelligence|machine learning|large language models?|generative AI|neural network/;
-const AI_I = /artificial intelligence|machine learning|large language models?|neural network/i;
+// "Check your own text": the TF-IDF model, ported from scikit-learn to run here
+const AI = /\b(?:AI|GenAI|LLMs?)\b|generative AI/, AI_I = /artificial intelligence|machine learning|large language models?|neural network/i;
 let MODEL, INDEX;
 fetch("model.json").then(r => r.json()).then(m => { MODEL = m; INDEX = new Map(m.vocab.map((w, i) => [w, i])); });
 function classify(text) {
   const t = text.toLowerCase().match(/[\p{L}\p{N}_]{2,}/gu) || [];
-  const grams = [...t]; for (let i = 0; i < t.length - 1; i++) grams.push(t[i] + " " + t[i + 1]);
-  const tf = new Map(); grams.forEach(g => { const j = INDEX.get(g); if (j !== undefined) tf.set(j, (tf.get(j) || 0) + 1); });
-  const x = []; let norm = 0;
-  tf.forEach((n, j) => { const v = (1 + Math.log(n)) * MODEL.idf[j]; x.push([j, v]); norm += v * v; });
-  norm = Math.sqrt(norm) || 1;
-  const s = MODEL.coef.map((row, k) => x.reduce((a, [j, v]) => a + row[j] * v / norm, MODEL.intercept[k]));
+  const g = [...t]; for (let i = 0; i < t.length - 1; i++) g.push(t[i] + " " + t[i + 1]);
+  const tf = new Map(); g.forEach(w => { const j = INDEX.get(w); if (j !== undefined) tf.set(j, (tf.get(j) || 0) + 1); });
+  const x = []; let n = 0;
+  tf.forEach((c, j) => { const v = (1 + Math.log(c)) * MODEL.idf[j]; x.push([j, v]); n += v * v; });
+  n = Math.sqrt(n) || 1;
+  const s = MODEL.coef.map((row, k) => x.reduce((a, [j, v]) => a + row[j] * v / n, MODEL.intercept[k]));
   return MODEL.classes[s.indexOf(Math.max(...s))];
 }
 document.getElementById("check").onclick = () => {
   if (!MODEL) return;
   const sec = document.getElementById("d-section").value;
-  const sents = document.getElementById("text").value.replace(/\n/g, " ").split(/(?<=[.!?])\s+(?=[A-Z("“])/).filter(s => s.split(/\s+/).length >= 5);
-  const hits = sents.filter(s => AI.test(s) || AI_I.test(s));
-  document.querySelector("#draft-out tbody").innerHTML = hits.length
-    ? hits.map(s => `<tr><td>${lab(classify(sec + ": " + s))}</td><td>${esc(s)}</td></tr>`).join("")
-    : `<tr><td class="muted">No sentences mention AI.</td></tr>`;
+  const sents = document.getElementById("text").value.replace(/\n/g, " ").split(/(?<=[.!?])\s+(?=[A-Z("“])/).filter(s => s.trim());
+  document.getElementById("draft-out").innerHTML = "<p>" + sents.map(s =>
+    (AI.test(s) || AI_I.test(s)) && s.split(/\s+/).length >= 5 ? `<mark class="${classify(sec + ": " + s)}">${esc(s)}</mark>` : esc(s)).join(" ") + "</p>";
 };
 </script>
 </body>
