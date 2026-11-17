@@ -42,6 +42,7 @@
     <h1>AI-Washing Detector</h1>
     <p>Sentences about AI in recent 10-K filings, labeled as <span class="l-concrete">concrete</span> (checkable), <span class="l-vague">vague</span>, <span class="l-risk">risk</span> or <span class="l-context">context</span>.
       <a href="https://github.com/Tejesh18/ai-washing-detector">Source and write-up on GitHub</a>.</p>
+    <p class="muted" id="updated"></p>
   </header>
 
   <nav>
@@ -114,10 +115,18 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   b.classList.add("on"); document.getElementById(b.dataset.tab).classList.add("on");
 });
 
-fetch("data.json").then(r => r.json()).then(data => {
+// Live data comes from the AWS pipeline (CloudFront in front of S3). If that's
+// unreachable the page falls back to the snapshot committed in this repo.
+const LIVE = "https://d3l6tnkvdksi5y.cloudfront.net/public/data.json";
+fetch(LIVE).then(r => { if (!r.ok) throw r; return r.json(); })
+  .catch(() => fetch("data.json").then(r => r.json()))
+  .then(data => {
+  document.getElementById("updated").textContent = data.updated
+    ? `Checked against SEC EDGAR every hour. Last update ${data.updated}.`
+    : "Snapshot copy (live data unavailable).";
   const rows = data.companies.map(c => {
     const o = { ...c }; ["fiscal_year", "ai_sentences", "concrete", "vague", "risk", "context"].forEach(k => o[k] = +c[k]);
-    o.substance = o.concrete + o.vague >= MIN_CLAIMS && c.substance !== "" ? +c.substance : null;
+    o.substance = o.concrete + o.vague >= MIN_CLAIMS && c.substance != null && c.substance !== "" ? +c.substance : null;
     o.name = NAMES[o.ticker] || o.ticker; return o;
   });
   const byT = {}; rows.forEach(r => (byT[r.ticker] ||= []).push(r));

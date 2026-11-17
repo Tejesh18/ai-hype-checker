@@ -232,5 +232,28 @@ def site(out: Path = typer.Option(Path("docs/data.json"))) -> None:
     console.print(f"[green]wrote {mpath} ({mpath.stat().st_size // 1024} KB, {len(vocab)} features)[/green]")
 
 
+@app.command()
+def rescore(
+    bucket: str = typer.Option(..., envvar="AIWASH_BUCKET", help="The deployed bucket (terraform output bucket)."),
+    function: str = typer.Option("aiwash-scorer"),
+) -> None:
+    """Re-run the deployed scorer on every filing already in S3.
+
+    S3 only fires an event when an object is written. Use this after
+    shipping a new model, or if filings landed before the trigger existed
+    (which is exactly what happened on the first deploy).
+    """
+    import json
+
+    import boto3
+
+    s3, lam = boto3.client("s3"), boto3.client("lambda")
+    keys = [o["Key"] for p in s3.get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix="raw/") for o in p.get("Contents", [])]
+    for key in keys:
+        payload = {"Records": [{"s3": {"object": {"key": key}}}]}
+        lam.invoke(FunctionName=function, InvocationType="Event", Payload=json.dumps(payload).encode())
+    console.print(f"[green]queued {len(keys)} filings for {function}[/green]")
+
+
 if __name__ == "__main__":
     app()
