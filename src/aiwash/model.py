@@ -192,5 +192,22 @@ def cross_validate(examples: list[Example], methods: list[str], folds: int = 5, 
     return results
 
 
+def export_embed_head(examples: list[Example], path: Path) -> None:
+    """Train embeddings + logistic regression on every label and save the
+    classifier weights as JSON. The scorer Lambda embeds with bge-small and
+    applies these weights with a dot product, so it doesn't need sklearn."""
+    import json
+
+    from .embed import DEFAULT_MODEL, embed
+
+    clf = _logreg().fit(embed([e.text for e in examples]), [e.label for e in examples])
+    path.write_text(json.dumps({
+        "embed_model": DEFAULT_MODEL,
+        "classes": [str(c) for c in clf.classes_],
+        "coef": clf.coef_.round(6).tolist(),
+        "intercept": clf.intercept_.round(6).tolist(),
+    }))
+
+
 def train_full(examples: list[Example], method: str):
     return rules if method == "rules" else FITTERS[method](examples)

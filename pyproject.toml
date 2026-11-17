@@ -13,6 +13,7 @@ dependencies = [
     "numpy>=1.26",
     "fastembed>=0.4",
     "scikit-learn>=1.5",
+    "boto3>=1.44.4",
 ]
 
 [project.optional-dependencies]
