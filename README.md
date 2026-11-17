@@ -17,7 +17,7 @@ From the latest two 10-Ks of 15 large companies (1,177 AI sentences):
 - **Only 15% of AI sentences are checkable claims.** Half are risk warnings.
 - **Apple went from 6 AI sentences to 47 in a year, and none is a checkable claim.** 39 are risk warnings.
 - **NVIDIA backs up its AI talk the most:** 38 concrete claims (named products, launch dates, a 2.5x throughput number).
-- **Tesla talks more and says less:** AI sentences 20 → 47, substance 88% → 37% (vague claims 1 → 17).
+- **Tesla talks more and says less:** AI sentences 20 → 47, substance 75% → 37% (vague claims 2 → 17).
 - **The big banks don't promote their AI at all.** JPMorgan and Goldman mention it 20–28 times each, all risk or background.
 
 *Substance* = concrete / (concrete + vague). Risk warnings don't count either way, so a careful bank isn't punished for being careful.
